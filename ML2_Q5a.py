@@ -5,8 +5,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import style
 plt.style.use('ggplot')
-from sklearn import svm, metrics, model_selection
+from sklearn import svm, metrics, model_selection, preprocessing
 from sklearn.metrics import classification_report, confusion_matrix
+from sklearn_pandas import DataFrameMapper
 import seaborn as sns
 from sklearn.metrics import plot_precision_recall_curve
 from sklearn.metrics import plot_roc_curve
@@ -39,6 +40,10 @@ print(counts)
 X_train = wdbc_train.drop(['diagnosis'], axis=1)
 print(X_train.head(5))
 print(X_train.shape)
+print(X_train.describe())
+#X_train.plot()
+
+
 
 Y_train = wdbc_train['diagnosis']
 print(Y_train.head(5))
@@ -48,43 +53,55 @@ print(Y_train.shape)
 X_test = wdbc_test.drop(['diagnosis'], axis=1)
 print(X_test.head(5))
 print(X_test.shape)
+print(X_test.describe())
+#X_test.plot()
 
 Y_test = wdbc_test['diagnosis']
 print(Y_test.head(5))
 print(Y_test.shape)
 
 
-##normalize trainig data
-X_train_min = X_train.min()
-X_train_range = (X_train - X_train_min).max()
-X_train_scaled = (X_train - X_train_min)/X_train_range
+##normalize trainig data using StandardScaler
+# X_train_min = X_train.min()
+# X_train_range = (X_train - X_train_min).max()
+# X_train_scaled = (X_train - X_train_min)/X_train_range
+scaler = preprocessing.StandardScaler().fit(X_train)
+X_train_scaled_features = scaler.transform(X_train)
+X_train_scaled = pd.DataFrame(X_train_scaled_features, index=X_train.index, columns=X_train.columns)
+print(X_train_scaled.shape)
+print(X_train_scaled)
+
 
 ##normalize test data
-X_test_min = X_test.min()
-X_test_range = (X_test - X_test_min).max()
-X_test_scaled = (X_test - X_test_min)/X_test_range
+# X_test_min = X_test.min()
+# X_test_range = (X_test - X_test_min).max()
+# X_test_scaled = (X_test - X_test_min)/X_test_range
+X_test_scaled_features = scaler.transform (X_test)
+X_test_scaled = pd.DataFrame(X_test_scaled_features, index=X_test.index, columns=X_test.columns)
+print(X_test_scaled.shape)
+print(X_test_scaled)
 
-##model fitting
-print("Model fitting pre-norm")
-svc_model = svm.SVC()
-svc_model.fit(X_train, Y_train)
-Y_predict = svc_model.predict(X_test)
-cm = np.array(confusion_matrix(Y_test, Y_predict, labels=[1,0]))
-confusion = pd.DataFrame(cm, index=['is_cancer', 'is_benign'],
-                         columns=['predicted_cancer','predicted_benign'])
-print(confusion)
-heatmap_confusion = sns.heatmap(confusion, annot = True, linewidths=.5)
-fig = heatmap_confusion.get_figure()
-fig.savefig("heatmap_Confusion.png")
-print(classification_report(Y_test,Y_predict))
-
-# plot ROC AUC prenorm
-metrics.plot_roc_curve(svc_model, X_test, Y_test)
-plt.show()
+# ##model fitting
+# print("Model fitting pre-norm")
+# svc_model = svm.SVC()
+# svc_model.fit(X_train, Y_train)
+# Y_predict = svc_model.predict(X_test)
+# cm = np.array(confusion_matrix(Y_test, Y_predict, labels=[1,0]))
+# confusion = pd.DataFrame(cm, index=['is_cancer', 'is_benign'],
+#                          columns=['predicted_cancer','predicted_benign'])
+# print(confusion)
+# heatmap_confusion = sns.heatmap(confusion, annot = True, linewidths=.5)
+# fig = heatmap_confusion.get_figure()
+# fig.savefig("heatmap_Confusion.png")
+# print(classification_report(Y_test,Y_predict))
+#
+# # plot ROC AUC prenorm
+# metrics.plot_roc_curve(svc_model, X_test, Y_test)
+# plt.show()
 
 ###model fitting postnorm
 print("Model fitting postnorm")
-svc_model_postnorm = svm.SVC()
+svc_model_postnorm = svm.SVC(kernel='linear', C = 1.0)
 svc_model_postnorm.fit(X_train_scaled, Y_train)
 Y_predict_postnorm = svc_model_postnorm.predict(X_test_scaled)
 cm_postnorm = confusion_matrix(Y_test, Y_predict_postnorm)
