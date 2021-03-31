@@ -5,6 +5,9 @@ from random import random
 import numpy as np
 import pandas as pd
 from math import exp
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import style
+plt.style.use('ggplot')
 
 # Initialize a network
 def initialize_network():
@@ -43,7 +46,7 @@ def initialize_network():
 	z3 = np.append(w3_data, b3_data, axis=1)
 	print(z3)
 
-
+	### hidden layer has 4 neurons
 	hidden_layer1 = [	{
 						'weights':z1[i],
 						'delta': np.zeros(4),
@@ -52,6 +55,7 @@ def initialize_network():
 	print("hidden_layer1")
 	print(hidden_layer1)
 	network.append(hidden_layer1)
+	## hidden layer has 4 neurons
 	hidden_layer2 = [	{
 						'weights':z2[i],
 						'delta': np.zeros(4),
@@ -60,6 +64,7 @@ def initialize_network():
 	print("hidden_layer2")
 	print(hidden_layer2)
 	network.append(hidden_layer2)
+	###output layer has one neuron
 	output_layer = [	{
 						'weights':z3[i],
 						'delta': np.zeros(1),
@@ -95,6 +100,7 @@ def forward_propagate(network, row):
 			neuron['output'] = transfer(activation)
 			new_inputs.append(neuron['output'])
 		inputs = new_inputs
+
 	return inputs
 
 
@@ -137,23 +143,30 @@ def update_weights(network, row, l_rate):
 
 # Train a network for a fixed number of epochs
 def train_network(network, train, l_rate, n_epoch, n_outputs):
+	loss_arr = []
 	for epoch in range(n_epoch):
 		sum_error = 0
 		for row in train:
 			outputs = forward_propagate(network, row)
-			expected = [0 for i in range(n_outputs)]
-			expected[row[-1]] = 1
+			expected = [1]
+			expected[0] = 1
 			sum_error += sum([0.5*((expected[i]-outputs[i])**2) for i in range(len(expected))])
 			backward_propagate_error(network, expected)
 			update_weights(network, row, l_rate)
-		print('>epoch=%d, lrate=%.3f, error=%.3f' % (epoch, l_rate, sum_error))
+		print('>epoch=%d, lrate=%.3f, error=%.5f' % (epoch, l_rate, sum_error))
+		loss_arr.append(sum_error)
+		print("to find out gradient of 2nd column of weight matrix w1 in hidden layer 1")
+		print(epoch)
+		for layer in network:
+			print(layer)
+	return loss_arr
 
 
 def main():
 	print("Hello World!")
 	seed(1)
 
-	input_nt = np.array([[float(-1), float(0), float(1)]])
+	input_nt = np.array([[-1, 0, 1]])
 
 	input_txp = input_nt.transpose()
 	print(input_txp)
@@ -178,11 +191,12 @@ def main():
 	row = [-1, 0, 1, None]
 	output = forward_propagate(network, row)
 	print(output)
-	## identifying loss after one round of forward propagation:
-	# loss = ((np.sum(output[0] - float(1.0))**2)) * .5
-	# print("loss:")
-	# print(loss)
-	# backward_propagate_error(network, expected)
+
+	# identifying loss after one round of forward propagation:
+	loss = ((np.sum(output[0] - float(1.0))**2)) * .5
+	print("loss after first round:")
+	print(loss)
+
 	print("network after one round of forward propagation")
 	for layer in network:
 		print(layer)
@@ -192,15 +206,26 @@ def main():
 	backward_propagate_error(network, expected)
 
 	print("network after one round of back propagation!")
+
+	for layer in network:
+		print(layer)
+		print("--")
+		for dicts in layer:
+			print(dicts)
+			print(dicts['delta'])
+
+	loss_arr = train_network(network, input_nt, 1.0, 10, 1)
+	print(loss_arr)
 	for layer in network:
 		print(layer)
 
+	epochs_arr = [i+1 for i in range(10)]
+	print(epochs_arr)
 
-	# train_network(network, dataset, 0.5, 20, n_outputs)
-	# for layer in network:
-	# 	print(layer)
-
-
+	plt.plot(epochs_arr, loss_arr)
+	plt.scatter(epochs_arr, loss_arr)
+	plt.legend()
+	plt.show()
 
 
 
