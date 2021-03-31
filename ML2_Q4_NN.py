@@ -113,20 +113,31 @@ def transfer_derivative(output):
 def backward_propagate_error(network, expected):
 	for i in reversed(range(len(network))):
 		layer = network[i]
+
 		errors = list()
 		if i != len(network)-1:
 			for j in range(len(layer)):
+				#print("for j in range(len(layer)):")
+				#print(j)
 				error = 0.0
 				for neuron in network[i + 1]:
 					error += (neuron['weights'][j] * neuron['delta'])
 				errors.append(error)
 		else:
 			for j in range(len(layer)):
+				#print("for j in range(len(layer)) when i is the same as len(network)-1:")
+				#print(j)
 				neuron = layer[j]
 				errors.append(expected[j] - neuron['output'])
 		for j in range(len(layer)):
 			neuron = layer[j]
 			neuron['delta'] = errors[j] * transfer_derivative(neuron['output'])
+			print("printing neuron")
+			neuron['gradient'] = np.outer(errors[j], neuron['output'])
+			print("printing gradient")
+			print(neuron)
+			print("done printing deltas for:"+ str(i))
+
 
 
 # Update network weights with error
@@ -155,7 +166,7 @@ def train_network(network, train, l_rate, n_epoch, n_outputs):
 			update_weights(network, row, l_rate)
 		print('>epoch=%d, lrate=%.3f, error=%.5f' % (epoch, l_rate, sum_error))
 		loss_arr.append(sum_error)
-		print("to find out gradient of 2nd column of weight matrix w1 in hidden layer 1")
+		#print("to find out gradient of 2nd column of weight matrix w1 in hidden layer 1")
 		print(epoch)
 		for layer in network:
 			print(layer)
@@ -209,13 +220,14 @@ def main():
 
 	for layer in network:
 		print(layer)
-		print("--")
+
 		for dicts in layer:
 			print(dicts)
 			print(dicts['delta'])
 
 	loss_arr = train_network(network, input_nt, 1.0, 10, 1)
 	print(loss_arr)
+	print("final Layer in network--")
 	for layer in network:
 		print(layer)
 
